@@ -11,7 +11,6 @@ int ledRed = 5;
 int ledGreen = 6;
 int ledBlue = 9;
 int ledWhite = 10;
-unsigned long time = 0;
 
 void setup() {
   pinMode(13, OUTPUT);
@@ -33,17 +32,9 @@ void loop() {
 
 // callback for received data
 void receiveData(int byteCount){
-    
-  time = millis()-time;
-  
-  if (time > 5) {
-      // last callback more than 5ms before
-      // reset byte counter
-      byteCounter = 0;
-  }
-
 
   while(Wire.available()) {
+    //Serial.print(time);
     number = Wire.read();
     byteCounter++;
     
@@ -83,6 +74,7 @@ void receiveData(int byteCount){
       byteCounter = 0;
     }
   }
+  
 }
 
 // callback for sending data
