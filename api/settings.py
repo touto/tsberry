@@ -14,6 +14,8 @@ import os
 # read-only access to the endpoint).
 RESOURCE_METHODS = ['GET', 'POST', 'DELETE']
 
+IF_MATCH = False
+
 # Enable reads (GET), edits (PATCH) and deletes of individual items
 # (defaults to read-only item access).
 ITEM_METHODS = ['GET', 'PATCH', 'DELETE']
@@ -137,8 +139,19 @@ bulbs = {
             'type': 'dict',
             'schema': {
                 'red': {'type': 'integer'},
-                'green': {'type': 'integer'}
+                'green': {'type': 'integer'},
+                'blue': {'type': 'integer'},
+                'white': {'type': 'integer'},
             },
+        },
+        'remote': {
+            'type': 'boolean',
+            'default' : False,
+            'required' : True,
+        },
+        'address': {
+            'type': 'string',
+            'required' : True,
         },
     }
 }
@@ -172,6 +185,15 @@ areas = {
                 'resource': 'bulbs',
                 # make the owner embeddable with ?embedded={"owner":1}
                 'embeddable': True
+            },
+        },
+        'colors': {
+            'type': 'dict',
+            'schema': {
+                'red': {'type': 'integer'},
+                'green': {'type': 'integer'},
+                'blue': {'type': 'integer'},
+                'white': {'type': 'integer'},
             },
         },
     }
