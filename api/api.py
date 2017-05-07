@@ -19,6 +19,7 @@ import threading
 from time import sleep
 import datetime
 import smbus
+import subprocess
 
 client = MongoClient()
 db = client.eve
@@ -123,8 +124,11 @@ app = Eve()
 if __name__ == '__main__':
     #app.on_post_GET += post_get_callback
     #app.on_post_PATCH_areas += post_patch_area_callback
+    subprocess.Popen("/usr/bin/mongorestore --drop -d eve /opt/mongo_prepare/dump/eve/", shell=True)
+    sleep(2)
     bulbs = db.bulbs.find()
     for bulb in bulbs:
+        print "yoloyoloyoloyoloyoloyolo"
         print "create new connection to bulb"
         print bulb
         I2C = I2C()
