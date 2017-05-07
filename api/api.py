@@ -20,6 +20,8 @@ from time import sleep
 import datetime
 import smbus
 import subprocess
+import logging
+
 
 client = MongoClient()
 db = client.eve
@@ -29,7 +31,7 @@ class I2C:
    bus = smbus.SMBus(1)
    def writeNumber(self, value):
       bus.write_byte(address, value)
-      print "write"
+      #print "write"
       # bus.write_byte_data(address, 0, value)
       return -1
 
@@ -54,15 +56,10 @@ def post_get_callback(resource, request, payload):
     print 'A GET on the "%s" endpoint was just performed!' % resource
     #print payload['_id']
 
-def post_patch_area_callback(request, payload):
-    print vars(request)
-    print payload.headers
-    #print vars(payload)
-
 def post_update_callback(resource, payload):
     bulbs = db.bulbs.find({"area": ObjectId(payload['_id'])})
     for bulb in bulbs:
-        print bulb
+        #print bulb
         if bulb['remote']:
             # TODO
             print "bulb is remote"
@@ -96,6 +93,7 @@ def post_update_callback(resource, payload):
                 white = payload['colors']['white']
 
             I2C.sendRGBW(address, red, green, blue, white)
+            logging.debug("I2C Adresse: %s, red: %s, green: %s, blue: %s, white: %s" % (address, red, green, blue, white))
 
         #print bulb['address']
     #print resource['colors']['red']
@@ -124,14 +122,16 @@ app = Eve()
 if __name__ == '__main__':
     #app.on_post_GET += post_get_callback
     #app.on_post_PATCH_areas += post_patch_area_callback
+    logging.basicConfig(filename='/mnt/tmpfs/api.log',level=logging.DEBUG)
+
     subprocess.Popen("/usr/bin/mongorestore --drop -d eve /opt/mongo_prepare/dump/eve/", shell=True)
     sleep(2)
     bulbs = db.bulbs.find()
     for bulb in bulbs:
-        print "yoloyoloyoloyoloyoloyolo"
-        print "create new connection to bulb"
-        print bulb
+        #print "yoloyoloyoloyoloyoloyolo"
+        #print "create new connection to bulb"
+        #print bulb
         I2C = I2C()
-    app.on_update_areas += post_update_callback
+    app.on_updated_areas += post_update_callback
     app.run(host=host, port=port)
 

@@ -174,6 +174,9 @@ areas = {
         'description': {
             'type': 'string',
         },
+        'mode': {
+             'type': 'string',
+        },
         'member': {
             'type': 'objectid',
             #'required': True,
