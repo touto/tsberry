@@ -125,7 +125,7 @@ if __name__ == '__main__':
     logging.basicConfig(filename='/mnt/tmpfs/api.log',level=logging.DEBUG)
 
     subprocess.Popen("/usr/bin/mongorestore --drop -d eve /opt/mongo_prepare/dump/eve/", shell=True)
-    sleep(2)
+    sleep(1)
     bulbs = db.bulbs.find()
     for bulb in bulbs:
         #print "yoloyoloyoloyoloyoloyolo"
