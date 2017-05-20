@@ -22,7 +22,7 @@ class Encoder:
    def __exit__(self, *a):
       print('__exit__ called')
 
-   def __init__(self, pin_a, pin_b, debounce=0, name=""):
+   def __init__(self, pin_a, pin_b, debounce=0, name="", controller=""):
       self.pin_a = pin_a
       self.pin_b = pin_b
       self.name = name
@@ -102,13 +102,14 @@ class Encoder:
       #print "___________\n"
       #print int((Tmp)/4)
       #self.last_tick = datetime.datetime.now()
-
+      
       if self.Tmp > 2:
             self.Counter += 1
             self.mapNumber(self.Counter)
             #I2C().sendRGBW(encRed.Counter, encGreen.Counter, encBlue.Counter, encWhite.Counter)
             try:
-               session.patch('http://127.0.0.1:5000/areas/590314c04dfbff0885ebf185', json={"colors": {"red": encRed.Counter, "green": encGreen.Counter, "blue": encBlue.Counter, "white": encWhite.Counter}})
+                manual_controll.update("manual_controll")
+                pass
             except requests.exceptions.ConnectionError:
                print "connection error"
             print "%s: %s" % (self.displayName(), self.Counter)
@@ -117,29 +118,66 @@ class Encoder:
       elif self.Tmp < -2:
             self.Counter -= 1
             self.mapNumber(self.Counter)
-            #I2C().sendRGBW(encRed.Counter, encGreen.Counter, encBlue.Counter, encWhite.Counter)
             try:
-               session.patch('http://127.0.0.1:5000/areas/590314c04dfbff0885ebf185', json={"colors": {"red": encRed.Counter, "green": encGreen.Counter, "blue": encBlue.Counter, "white": encWhite.Counter}})
+               manual_controll.update("manual_controll")
             except requests.exceptions.ConnectionError:
                print "connection error"
 
             print "%s: %s" % (self.displayName(), self.Counter)
             self.Tmp = 0
 
+class Controller:
+    name = "controller 1"
+    encoders = []
+
+    def addEncoder(self, *encoders):
+        for encoder in encoders:
+            self.encoders.append(encoder)
+
+    def listEncoders(self):
+        for encoder in self.encoders:
+            pass
+            print encoder.displayName()
+        return True
+
+    def currentValues(self):
+        currentValues = {}
+        for encoder in self.encoders:
+            currentValues[encoder.name] = encoder.Counter
+        return currentValues
+
+    def update(self, controller):
+        currentValues = self.currentValues()
+        print currentValues['red']
+        try:
+            session.patch('http://127.0.0.1/api/areas/590314c04dfbff0885ebf185', json={"colors": {"red": currentValues['red'], "green": currentValues['green'], "blue": currentValues['blue'], "white": currentValues['white']}})
+        except requests.exceptions.ConnectionError:
+           print "connection error"
+
+        print "update!!"
+
 GPIO.setwarnings(True)
 GPIO.setmode(GPIO.BCM)
 
-encRed = Encoder(20, 21, 15, "red")
-encGreen = Encoder(17, 18, 15, "green")
-encBlue = Encoder(22, 23, 15, "blue")
-encWhite = Encoder(24, 25, 15, "white")
+#encRed = Encoder(20, 21, 15, "red")
+#encGreen = Encoder(17, 18, 15, "green")
+#encBlue = Encoder(22, 23, 15, "blue")
+#encWhite = Encoder(24, 25, 15, "white")
+#
+#
+##enc2 = Encoder(5, 15)
+#encRed.displayEncoder()
+#encGreen.displayEncoder()
+#encBlue.displayEncoder()
+#encWhite.displayEncoder()
 
-
-#enc2 = Encoder(5, 15)
-encRed.displayEncoder()
-encGreen.displayEncoder()
-encBlue.displayEncoder()
-encWhite.displayEncoder()
+manual_controll = Controller()
+manual_controll.addEncoder(
+    Encoder(20, 21, 15, "red", "manual_controll"),
+    Encoder(17, 18, 15, "green", "manual_controll"),
+    Encoder(22, 23, 15, "blue", "manual_controll"),
+    Encoder(24, 25, 15, "white", "manual_controll"))
+manual_controll.listEncoders()
 
 #enc2.displayEncoder()
 while True:
