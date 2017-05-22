@@ -5,10 +5,11 @@ import threading
 from time import sleep
 import datetime
 import requests
+import json
 
 session = requests.Session()
 
-class Encoder:
+class Encoder(object):
    'Common base class for all quadrature encoders'
    encCount = 0
    Counter = 0
@@ -26,6 +27,7 @@ class Encoder:
       self.pin_a = pin_a
       self.pin_b = pin_b
       self.name = name
+      self.controller = controller
       self.debounce = debounce
       Encoder.encCount += 1
 
@@ -59,7 +61,7 @@ class Encoder:
      return self.name
 
    def displayEncoder(self):
-      print "Pin A : ", self.pin_a,  ", Pin B: ", self.pin_b, ", Debounce: ", self.debounce
+      print "Pin A : ", self.pin_a,  ", Pin B: ", self.pin_b, ", Debounce: ", self.debounce, "momi: ", self.title
 
    def interrupt_both(self, arg):
       #print arg2
@@ -108,31 +110,75 @@ class Encoder:
             self.mapNumber(self.Counter)
             #I2C().sendRGBW(encRed.Counter, encGreen.Counter, encBlue.Counter, encWhite.Counter)
             try:
-                manual_controll.update("manual_controll")
+                self.controller.update("manual_controll")
                 pass
             except requests.exceptions.ConnectionError:
                print "connection error"
-            print "%s: %s" % (self.displayName(), self.Counter)
+            #print "%s: %s" % (self.displayName(), self.Counter)
             self.Tmp = 0
 
       elif self.Tmp < -2:
             self.Counter -= 1
             self.mapNumber(self.Counter)
             try:
-               manual_controll.update("manual_controll")
+               self.controller.update("manual_controll")
             except requests.exceptions.ConnectionError:
                print "connection error"
 
-            print "%s: %s" % (self.displayName(), self.Counter)
+            #print "%s: %s" % (self.displayName(), self.Counter)
             self.Tmp = 0
 
-class Controller:
-    name = "controller 1"
+class Controller(object):
+
     encoders = []
 
+    def __init__(self):
+        self._title = None
+        self._id = None
+        #area= db.area.find({"title": self.title)})
+
+    @property
+    def id(self):
+        #print 'called getter'
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, value):
+        self._title = value
+        url = 'http://127.0.0.1/api/areas?where={"title": "%s"}' % (self.title) 
+        area = session.get(url, headers={'Content-Type': 'application/json'}).json()
+        if not area['_items'][0]['_id']:
+            # TODO create area via api
+            pass
+
+        self.id = area['_items'][0]['_id']
+
+    @title.deleter
+    def title(self):
+        del self._title
+
+
     def addEncoder(self, *encoders):
+        if not self.title:
+            raise ValueError('can not add encoder on controller instance without name... set controller name first!')
         for encoder in encoders:
-            self.encoders.append(encoder)
+            self.encoders.append(
+                Encoder(
+                    encoder['pinA'],
+                    encoder['pinB'],
+                    encoder['debounce'],
+                    encoder['name'],
+                    self
+                )
+            )
 
     def listEncoders(self):
         for encoder in self.encoders:
@@ -148,13 +194,11 @@ class Controller:
 
     def update(self, controller):
         currentValues = self.currentValues()
-        print currentValues['red']
         try:
-            session.patch('http://127.0.0.1/api/areas/590314c04dfbff0885ebf185', json={"colors": {"red": currentValues['red'], "green": currentValues['green'], "blue": currentValues['blue'], "white": currentValues['white']}})
+            url = 'http://127.0.0.1/api/areas/%s' % (self.id)
+            session.patch(url, json={"colors": {"red": currentValues['red'], "green": currentValues['green'], "blue": currentValues['blue'], "white": currentValues['white']}})
         except requests.exceptions.ConnectionError:
            print "connection error"
-
-        print "update!!"
 
 GPIO.setwarnings(True)
 GPIO.setmode(GPIO.BCM)
@@ -172,12 +216,14 @@ GPIO.setmode(GPIO.BCM)
 #encWhite.displayEncoder()
 
 manual_controll = Controller()
+manual_controll.title = "test"
 manual_controll.addEncoder(
-    Encoder(20, 21, 15, "red", "manual_controll"),
-    Encoder(17, 18, 15, "green", "manual_controll"),
-    Encoder(22, 23, 15, "blue", "manual_controll"),
-    Encoder(24, 25, 15, "white", "manual_controll"))
-manual_controll.listEncoders()
+    dict([('pinA', 20), ('pinB', 21), ('debounce', 15), ('name', 'red')]),
+    dict([('pinA', 17), ('pinB', 18), ('debounce', 15), ('name', 'green')]),
+    dict([('pinA', 22), ('pinB', 23), ('debounce', 15), ('name', 'blue')]),
+    dict([('pinA', 24), ('pinB', 25), ('debounce', 15), ('name', 'white')])
+)
+#manual_controll.listEncoders()
 
 #enc2.displayEncoder()
 while True:
