@@ -216,7 +216,7 @@ GPIO.setmode(GPIO.BCM)
 #encWhite.displayEncoder()
 
 manual_controll = Controller()
-manual_controll.title = "test"
+manual_controll.title = "manual_1"
 manual_controll.addEncoder(
     dict([('pinA', 20), ('pinB', 21), ('debounce', 15), ('name', 'red')]),
     dict([('pinA', 17), ('pinB', 18), ('debounce', 15), ('name', 'green')]),
