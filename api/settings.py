@@ -1,13 +1,16 @@
 import os
 
-# We want to seamlessy run our API both locally and on Heroku. If running on
-# Heroku, sensible DB connection settings are stored in environment variables.
-#MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
-#MONGO_PORT = os.environ.get('MONGO_PORT', 27017)
-#MONGO_USERNAME = os.environ.get('MONGO_USERNAME', 'user')
-#MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD', 'user')
-#MONGO_DBNAME = os.environ.get('MONGO_DBNAME', 'evedemo')
+# bit resolution of DAC
+DAC_RESOLUTION = 8
 
+# upper threshold for temperature color control
+TEMP_UPPER_THRESHOLD = 30
+
+# lower threshold for temperature color control
+TEMP_LOWER_THRESHOLD = 20
+
+# default brightness in percent for temperature control mode
+TEMP_DEFAULT_BRIGHTNESS = 100
 
 # Enable reads (GET), inserts (POST) and DELETE for resources/collections
 # (if you omit this line, the API will default to ['GET'] and provide
@@ -211,3 +214,18 @@ DOMAIN = {
     'areas': areas,
     'bulbs': bulbs,
 }
+
+# validate variables
+
+# brightness must be between 0 and 100
+#if not 0 <= TEMP_DEFAULT_BRIGHTNESS <= 100:
+#    print "TEMP_DEFAULT_BRIGHTNESS error"
+try:
+    if not 0 <= TEMP_DEFAULT_BRIGHTNESS <= 100:
+        raise ValueError('invalid value for TEMP_DEFAULT_BRIGHTNESS in %s\nvalue must be between 0 and 100' % __file__)
+    if TEMP_LOWER_THRESHOLD > TEMP_UPPER_THRESHOLD:
+                raise ValueError('invalid value for temperature thresholds in %s\nTEMP_LOWER_THRESHOLD must be lower than TEMP_UPPER_THRESHOLD:' % __file__)
+except ValueError as err:
+    print err
+    raise SystemExit
+
